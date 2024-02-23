@@ -1,6 +1,6 @@
-type Index = {
+export type Index = {
   title: string;
   url: string;
 };
 
-type Indexes = { [key: string]: Index };
+export type Indexes = { [key: string]: Index };
