@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Noto Sans JP", sans-serif;
+  background: #e3e3e3;
+  max-width: 60rem;
+  width: 95%;
+  font-size: 100%;
+  margin: 0 auto;
+}
+
+/** Header **/
+#header {
+  text-align: center;
+  margin-top: 8rem;
+  margin-bottom: 2rem;
+}
+
+#header a {
+  text-decoration: none;
+}
+
+#header h1.title {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  color: black;
+  font-size: 3rem;
+  font-family: "Caveat", cursive;
+}
+
+#header p {
+  color: #484848;
+  font-family: "Caveat", cursive;
+  font-size: 1.3rem;
+}
+
+#header .link {
+  display: flex;
+  justify-content: space-around;
+  font-size: 1.4rem;
+}
+
+#header .link a {
+  color: black;
+  text-decoration: underline;
+}
