@@ -17,6 +17,16 @@ type YM = {
   month: number;
 };
 
+const back = (currentYM: YM): YM => ({
+  year: currentYM.month == 0 ? currentYM.year - 1 : currentYM.year,
+  month: currentYM.month == 0 ? 11 : currentYM.month - 1,
+});
+
+const next = (currentYM: YM): YM => ({
+  year: currentYM.month == 11 ? currentYM.year + 1 : currentYM.year,
+  month: currentYM.month == 11 ? 0 : currentYM.month + 1,
+});
+
 const dayColor = (day: number, isCurrent: boolean) => {
   switch (day) {
     case 0:
@@ -35,23 +45,25 @@ type DayProps = {
 };
 
 const Day = ({ day, current, index }: DayProps) => {
-  const isCurrent = day.month() == current.month;
-  const isToday = isCurrent && dayjs().date() == day.date();
+  const isCurrentMonth = day.month() == current.month;
+  const isToday = isCurrentMonth && dayjs().date() == day.date();
   const todayName = [
     "font-date",
-    "text-sm",
-    dayColor(day.day(), isCurrent),
-    `${isToday ? "underline decoration-slate-500" : ""}`,
+    "text-base",
+    dayColor(day.day(), isCurrentMonth),
+    `${isToday ? "underline decoration-slate-500 font-bold" : ""}`,
   ].join(" ");
+  const bg = isCurrentMonth ? "bg-[#dfdfdf]" : "bg-[#e3e3e3]";
+  const txt = window.innerWidth > 400 ? index?.title : "📋";
   return (
-    <div style={{ height: "120px", width: "140px" }} className="p-2 ">
+    <div className={`m-1 p-2 w-32 h-32 ${bg}`}>
       <p className={todayName}>
         {day.date() == 1 ? day.format("M/D") : day.date()}
       </p>
-      {isCurrent && index && (
-        <p className="ml-4 my-1 text-center">
+      {isCurrentMonth && index && (
+        <p className="my-1 text-center">
           <a href={index.url} className="text-black hover:underline">
-            {index?.title}
+            {txt}
           </a>
         </p>
       )}
@@ -89,16 +101,6 @@ const getCalendarDays = (ym: YM): dayjs.Dayjs[][] => {
     );
 };
 
-const back = (currentYM: YM): YM => ({
-  year: currentYM.month == 0 ? currentYM.year - 1 : currentYM.year,
-  month: currentYM.month == 0 ? 11 : currentYM.month - 1,
-});
-
-const next = (currentYM: YM): YM => ({
-  year: currentYM.month == 11 ? currentYM.year + 1 : currentYM.year,
-  month: currentYM.month == 11 ? 0 : currentYM.month + 1,
-});
-
 function App() {
   const [currentYM, setCurrentYM] = useState<YM>({
     year: dayjs().year(),
@@ -107,23 +109,24 @@ function App() {
   const [indexes, setIndexes] = useState<{ [key: string]: Indexes }>({});
 
   useEffect(() => {
-    const y = currentYM.year.toString();
-    if (!indexes[y]) {
-      fetchIndex(currentYM.year).then((v) => {
+    (async () => {
+      const y = currentYM.year.toString();
+      if (!indexes[y]) {
+        const v = await fetchIndex(currentYM.year);
         indexes[y] = v;
         setIndexes({ ...indexes });
-      });
-    }
+      }
+    })();
   }, [currentYM.year]);
 
   return (
     <div>
-      <div className="flex justify-center">
-        <div id="header" className="font-header">
-          <a href="/">
+      <div className="flex">
+        <div id="header" className="font-header basis-full">
+          <a href="/" className="mx-auto">
             <h1 className="title font-bold">Daily Bread</h1>
           </a>
-          <p>It is only a paper moon</p>
+          <p className="text-center">It is only a paper moon</p>
           <div className="link">
             <p>
               <a href="/rss.xml" target="_blank" rel="noopener noreferrer">
@@ -138,29 +141,26 @@ function App() {
           </div>
         </div>
       </div>
-      <h2 className="text-center text-xl m-4">
-        {currentYM.year}/{currentYM.month + 1}
+      <h2 className="text-center text-3xl m-4 font-header">
+        {currentYM.year}-{currentYM.month + 1}
       </h2>
-      <div className="flex justify-between">
-        <p
+      <div className="flex justify-evenly">
+        <button
           className="ml-20 font-header text-xl"
           onClick={() => setCurrentYM(back(currentYM))}
         >
           back
-        </p>
-        <p
+        </button>
+        <button
           className="mr-20 font-header text-xl"
           onClick={() => setCurrentYM(next(currentYM))}
         >
           next
-        </p>
+        </button>
       </div>
       <div className="my-10">
         {getCalendarDays(currentYM).map((v, i) => (
-          <div
-            key={i}
-            className="flex justify-evenly border-b-slate-300 border"
-          >
+          <div key={i} className="flex justify-evenly">
             {v.map((v) => {
               return (
                 <Day
