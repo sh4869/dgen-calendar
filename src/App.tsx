@@ -54,7 +54,7 @@ const Day = ({ day, current, index }: DayProps) => {
     `${isToday ? "underline decoration-slate-500 font-bold" : ""}`,
   ].join(" ");
   const bg = isCurrentMonth ? "bg-[#dfdfdf]" : "bg-[#e3e3e3]";
-  const txt = window.innerWidth > 400 ? index?.title : "📋";
+  const txt = window.innerWidth > 600 ? index?.title : "📋";
   return (
     <div className={`m-1 p-2 w-32 h-32 ${bg}`}>
       <p className={todayName}>
