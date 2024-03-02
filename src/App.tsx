@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import dayjs from "dayjs";
 import weekday from "dayjs/plugin/weekday";
 import "./index.css";
+import { Header } from "./header";
+import { YearMonth } from "./yearmonth";
 
 dayjs.extend(weekday);
 
@@ -10,22 +12,7 @@ type Diary = {
   url: string;
 };
 
-type Indexes = { [key: string]: Diary };
-
-type YM = {
-  year: number;
-  month: number;
-};
-
-const back = (currentYM: YM): YM => ({
-  year: currentYM.month == 0 ? currentYM.year - 1 : currentYM.year,
-  month: currentYM.month == 0 ? 11 : currentYM.month - 1,
-});
-
-const next = (currentYM: YM): YM => ({
-  year: currentYM.month == 11 ? currentYM.year + 1 : currentYM.year,
-  month: currentYM.month == 11 ? 0 : currentYM.month + 1,
-});
+type Diaries = { [key: string]: Diary };
 
 const dayColor = (day: number, isCurrent: boolean) => {
   switch (day) {
@@ -40,11 +27,11 @@ const dayColor = (day: number, isCurrent: boolean) => {
 
 type DayProps = {
   day: dayjs.Dayjs;
-  current: { year: number; month: number };
-  index?: Diary;
+  current: YearMonth;
+  diary?: Diary;
 };
 
-const Day = ({ day, current, index }: DayProps) => {
+const Day = ({ day, current, diary }: DayProps) => {
   const isCurrentMonth = day.month() == current.month;
   const isToday = isCurrentMonth && dayjs().date() == day.date();
   const todayName = [
@@ -54,15 +41,15 @@ const Day = ({ day, current, index }: DayProps) => {
     `${isToday ? "underline decoration-slate-500 font-bold" : ""}`,
   ].join(" ");
   const bg = isCurrentMonth ? "bg-[#dfdfdf]" : "bg-[#e3e3e3]";
-  const txt = window.innerWidth > 600 ? index?.title : "📋";
+  const txt = window.innerWidth > 600 ? diary?.title : "📋";
   return (
     <div className={`m-1 p-2 w-32 h-32 ${bg}`}>
       <p className={todayName}>
         {day.date() == 1 ? day.format("M/D") : day.date()}
       </p>
-      {isCurrentMonth && index && (
+      {isCurrentMonth && diary && (
         <p className="my-1 text-center">
-          <a href={index.url} className="text-black hover:underline">
+          <a href={diary.url} className="text-black hover:underline">
             {txt}
           </a>
         </p>
@@ -71,19 +58,19 @@ const Day = ({ day, current, index }: DayProps) => {
   );
 };
 
-const fetchIndex = async (year: number): Promise<Indexes> => {
+const fetchIndex = async (year: number): Promise<Diaries> => {
   try {
     return (await fetch(`/indexes/${year.toString()}.json`).then((_) =>
       _.json()
-    )) as Indexes;
+    )) as Diaries;
   } catch {
     return {};
   }
 };
 
 // 年月からその月のカレンダーを構成するのに必要な日を週ごとの配列にして返します
-const getCalendarDays = (ym: YM): dayjs.Dayjs[][] => {
-  const firstDayOfMonth = dayjs(`${ym.year}-${ym.month + 1}-1`);
+const getCalendarDays = (ym: YearMonth): dayjs.Dayjs[][] => {
+  const firstDayOfMonth = dayjs(`${ym.toString()}-1`);
   const first = firstDayOfMonth.weekday(0);
   const last = firstDayOfMonth.date(firstDayOfMonth.daysInMonth()).weekday(7);
   return new Array(last.diff(first, "day"))
@@ -101,12 +88,9 @@ const getCalendarDays = (ym: YM): dayjs.Dayjs[][] => {
     );
 };
 
-function App() {
-  const [currentYM, setCurrentYM] = useState<YM>({
-    year: dayjs().year(),
-    month: dayjs().month(),
-  });
-  const [indexes, setIndexes] = useState<{ [key: string]: Indexes }>({});
+const App = () => {
+  const [currentYM, setCurrentYM] = useState<YearMonth>(YearMonth.current());
+  const [indexes, setIndexes] = useState<{ [key: string]: Diaries }>({});
 
   useEffect(() => {
     (async () => {
@@ -119,42 +103,42 @@ function App() {
     })();
   }, [currentYM.year]);
 
+  useEffect(() => {
+    const params = window.location.href.split("#");
+    if (params.length > 1) {
+      const ym = YearMonth.fromString(params[1]);
+      if (ym) setCurrentYM(ym);
+    }
+  }, []);
+
+  const setParam = (ym: YearMonth) => {
+    window.location.href =
+      window.location.href.split("#")[0] + "#" + ym.toString();
+  };
+
+  const onBack = () => {
+    const b = currentYM.back();
+    setParam(b);
+    setCurrentYM(b);
+  };
+
+  const onNext = () => {
+    const n = currentYM.next();
+    setParam(n);
+    setCurrentYM(n);
+  };
+
   return (
     <div>
-      <div className="flex">
-        <div id="header" className="font-header basis-full">
-          <a href="/" className="mx-auto">
-            <h1 className="title font-bold">Daily Bread</h1>
-          </a>
-          <p className="text-center">It is only a paper moon</p>
-          <div className="link">
-            <p>
-              <a href="/rss.xml" target="_blank" rel="noopener noreferrer">
-                rss
-              </a>
-            </p>
-            <p>
-              <a href="/calendar" target="_blank" rel="noopener noreferrer">
-                calendar
-              </a>
-            </p>
-          </div>
-        </div>
-      </div>
+      <Header />
       <h2 className="text-center text-3xl m-4 font-header">
         {currentYM.year}-{currentYM.month + 1}
       </h2>
       <div className="flex justify-evenly">
-        <button
-          className="ml-20 font-header text-xl"
-          onClick={() => setCurrentYM(back(currentYM))}
-        >
+        <button className="ml-20 font-header text-xl" onClick={onBack}>
           back
         </button>
-        <button
-          className="mr-20 font-header text-xl"
-          onClick={() => setCurrentYM(next(currentYM))}
-        >
+        <button className="mr-20 font-header text-xl" onClick={onNext}>
           next
         </button>
       </div>
@@ -167,7 +151,7 @@ function App() {
                   key={v.format("YYYY/MM/DD")}
                   day={v}
                   current={currentYM}
-                  index={
+                  diary={
                     indexes[currentYM.year.toString()]?.[v.format("YYYY/MM/DD")]
                   }
                 />
@@ -178,6 +162,6 @@ function App() {
       </div>
     </div>
   );
-}
+};
 
 export default App;
