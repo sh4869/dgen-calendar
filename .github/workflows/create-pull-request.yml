@@ -3,7 +3,7 @@ name: "create pull request to diary-data"
 on:
   push:
     branches:
-      - master
+      - main
     
 jobs:
   create-pull-request:
