@@ -1,0 +1,14 @@
+name: "create pull request to diary-data"
+
+on:
+  push:
+    branches:
+      - master
+    
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        curl -vv -H "Authorization: token ${{ secrets.DISPATCH_TOKEN }}" -H "Accept: application/vnd.github.everest-preview+json" "https://api.github.com/repos/sh4869/diary-data/dispatches" -d '{"event_type": "update"}'
+    
